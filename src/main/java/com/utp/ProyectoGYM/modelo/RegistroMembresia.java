@@ -58,5 +58,4 @@ public class RegistroMembresia {
         this.fechaFin = fechaFin;
     }
     
-    
 }
