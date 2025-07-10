@@ -28,14 +28,11 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                // Acceso libre a Swagger, login, registro y recursos estáticos
-                .requestMatchers(
-                    "/swagger-ui/**", "/v3/api-docs/**", "/api/auth/**", "/login.html", "/registro.html", "/home.html",
-                    "/static/**", "/css/**", "/js/**"
-                ).permitAll()
+                // Acceso libre al endpoint de autenticación
+                .requestMatchers("/api/auth/**").permitAll()
                 // Solo ADMIN puede acceder a gestión de usuarios
                 .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
-                // Usuarios autenticados pueden ver otros recursos
+                // El resto de endpoints de la API requieren autenticación
                 .anyRequest().authenticated()
             )
             .csrf(csrf -> csrf.disable())
