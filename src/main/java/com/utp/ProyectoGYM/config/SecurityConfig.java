@@ -1,92 +1,89 @@
 package com.utp.ProyectoGYM.config;
 
+import com.utp.ProyectoGYM.modelo.Usuario;
+import com.utp.ProyectoGYM.repositorio.UsuarioRepositorio;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.Arrays;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+    @Autowired
+    private UsuarioRepositorio usuarioRepo;
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+    
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors().configurationSource(corsConfigurationSource())
-            .and()
-            .csrf().disable()
-            .exceptionHandling()
-                .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
-                .and()
-            .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-                .and()
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Permitir preflight requests
+                // Acceso libre a login, registro, Swagger y H2 Console
                 .requestMatchers(
                     "/api/auth/**",
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
                     "/swagger-ui.html",
-                    "/webjars/**"
+                    "/webjars/**",
+                    "/h2-console/**"
                 ).permitAll()
+                // Solo ADMIN puede gestionar usuarios
                 .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
+                // ADMIN y EMPLEADO pueden gestionar membresías y pagos
+                .requestMatchers("/api/membresias/**", "/api/pagos/**").hasAnyRole("ADMIN", "EMPLEADO")
                 .anyRequest().authenticated()
             )
-            .formLogin()
-                .loginProcessingUrl("/api/auth/login")
-                .successHandler((request, response, authentication) -> {
-                    response.setStatus(HttpStatus.OK.value());
-                    response.getWriter().write("{\"success\": true, \"message\": \"Login exitoso\"}");
-                })
-                .failureHandler((request, response, exception) -> {
-                    response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                    response.getWriter().write("{\"success\": false, \"message\": \"Credenciales inválidas\"}");
-                })
-                .usernameParameter("username")
-                .passwordParameter("password")
-                .permitAll()
-                .and()
-            .logout()
-                .logoutUrl("/api/auth/logout")
-                .logoutSuccessHandler((request, response, authentication) -> {
-                    response.setStatus(HttpStatus.NO_CONTENT.value());
-                })
-                .deleteCookies("JSESSIONID")
-                .permitAll();
-
+            .httpBasic(httpBasic -> {})
+            .sessionManagement(session -> 
+                session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+            )
+            .headers(headers -> headers
+                .frameOptions(frame -> frame.sameOrigin())
+                .xssProtection(xss -> xss.headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
+                .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'"))
+            );
+        
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(
+        configuration.setAllowedOrigins(List.of(
             "http://localhost:5173",
             "http://127.0.0.1:5173"
         ));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList(
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of(
             "Content-Type",
             "Authorization",
             "X-Requested-With",
             "Accept",
             "X-XSRF-TOKEN"
         ));
-        configuration.setExposedHeaders(Arrays.asList(
+        configuration.setExposedHeaders(List.of(
             "Authorization",
             "X-XSRF-TOKEN"
         ));
@@ -99,17 +96,32 @@ public class SecurityConfig {
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    public UserDetailsService userDetailsService() {
+        return username -> {
+            // Buscar usuario por nombre de usuario
+            // Asumiendo que existe un método findByUsername en el repositorio
+            Usuario usuario = usuarioRepo.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
+            
+            // Obtener el rol del usuario
+            // Asumiendo que la entidad Usuario tiene un campo 'rol' con sus getters/setters
+            String rol = "ROLE_USER"; // Valor por defecto
+            if (usuario.getRol() != null && !usuario.getRol().isEmpty()) {
+                rol = usuario.getRol().startsWith("ROLE_") ? 
+                    usuario.getRol() : 
+                    "ROLE_" + usuario.getRol();
+            }
+                
+            return User.builder()
+                    .username(usuario.getUsername())
+                    .password("{noop}" + usuario.getPassword()) // {noop} para deshabilitar el encriptado
+                    .roles(rol.replace("ROLE_", "")) // Elimina el prefijo ROLE_ si existe
+                    .build();
+        };
     }
 
     @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring().requestMatchers(
-            "/v3/api-docs/**",
-            "/swagger-ui/**",
-            "/swagger-ui.html",
-            "/webjars/**"
-        );
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
 }
