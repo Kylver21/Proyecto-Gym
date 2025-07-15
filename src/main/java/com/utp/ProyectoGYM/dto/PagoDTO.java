@@ -9,6 +9,7 @@ public class PagoDTO {
     private Double monto;
     private LocalDate fechaPago;
     private String metodoPago;
+    private String estado;
 
     // Getters y setters
     public Long getId() { return id; }
@@ -25,4 +26,7 @@ public class PagoDTO {
 
     public String getMetodoPago() { return metodoPago; }
     public void setMetodoPago(String metodoPago) { this.metodoPago = metodoPago; }
+
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
 }

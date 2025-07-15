@@ -11,6 +11,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/pagos")
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174", "http://localhost:5175"})
 public class PagoRestController {
 
     @Autowired
@@ -26,6 +27,11 @@ public class PagoRestController {
         Optional<PagoDTO> pago = pagoService.obtenerPorId(id);
         return pago.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/usuario/{usuarioId}")
+    public List<PagoDTO> obtenerPagosPorUsuario(@PathVariable Long usuarioId) {
+        return pagoService.obtenerPorUsuario(usuarioId);
     }
 
     @PostMapping

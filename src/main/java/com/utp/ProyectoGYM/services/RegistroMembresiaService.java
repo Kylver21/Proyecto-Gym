@@ -47,6 +47,12 @@ public class RegistroMembresiaService {
         registroMembresiaRepositorio.deleteById(id);
     }
 
+    public List<RegistroMembresiaDTO> obtenerPorUsuario(Long usuarioId) {
+        return registroMembresiaRepositorio.findByUsuarioId(usuarioId).stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
+    }
+
     private RegistroMembresiaDTO convertirADTO(RegistroMembresia entidad) {
         RegistroMembresiaDTO dto = new RegistroMembresiaDTO();
         dto.setId(entidad.getId());

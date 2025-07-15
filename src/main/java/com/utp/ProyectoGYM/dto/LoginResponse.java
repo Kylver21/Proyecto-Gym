@@ -1,33 +1,34 @@
 
 package com.utp.ProyectoGYM.dto;
 
+import com.utp.ProyectoGYM.modelo.Usuario;
+
 public class LoginResponse {
     private boolean success;
     private String message;
-    private String username;
-    private String role;
+    private Usuario user;
 
-    public LoginResponse(boolean success, String message, String username, String role) {
+    // Constructores
+    public LoginResponse() {}
+
+    public LoginResponse(boolean success, String message) {
         this.success = success;
         this.message = message;
-        this.username = username;
-        this.role = role;
     }
 
-    // Getters
-    public boolean isSuccess() {
-        return success;
+    public LoginResponse(boolean success, String message, Usuario user) {
+        this.success = success;
+        this.message = message;
+        this.user = user;
     }
 
-    public String getMessage() {
-        return message;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getRole() {
-        return role;
-    }
+    // Getters y Setters
+    public boolean isSuccess() { return success; }
+    public void setSuccess(boolean success) { this.success = success; }
+    
+    public String getMessage() { return message; }
+    public void setMessage(String message) { this.message = message; }
+    
+    public Usuario getUser() { return user; }
+    public void setUser(Usuario user) { this.user = user; }
 }

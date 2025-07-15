@@ -1,11 +1,14 @@
 package com.utp.ProyectoGYM.controller;
 
 import com.utp.ProyectoGYM.dto.LoginRequest;
+import com.utp.ProyectoGYM.dto.RegisterRequest;
 import com.utp.ProyectoGYM.dto.LoginResponse;
+import com.utp.ProyectoGYM.dto.AuthCheckResponse;
 import com.utp.ProyectoGYM.modelo.Usuario;
 import com.utp.ProyectoGYM.repositorio.UsuarioRepositorio;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +17,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174", "http://localhost:5175"})
 public class AuthController {
 
     @Autowired
@@ -22,50 +26,136 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest, HttpSession session) {
-        Optional<Usuario> usuarioOpt = usuarioRepositorio.findByUsername(loginRequest.getUsername());
-        if (usuarioOpt.isPresent()) {
-            Usuario usuario = usuarioOpt.get();
-            // Verificar la contraseña (usando {noop} para deshabilitar temporalmente el encriptado)
-            if (passwordEncoder.matches(loginRequest.getPassword(), usuario.getPassword())) {
-                // Configurar la sesión
-                session.setAttribute("userId", usuario.getId());
-                session.setAttribute("username", usuario.getUsername());
-                session.setAttribute("rol", usuario.getRol());
-                session.setAttribute("authenticated", true);
-                
-                return ResponseEntity.ok(new LoginResponse(
-                    true, 
-                    "Inicio de sesión exitoso", 
-                    usuario.getUsername(), 
-                    usuario.getRol()
-                ));
+    @PostMapping("/register")
+    public ResponseEntity<LoginResponse> register(@RequestBody RegisterRequest request) {
+        try {
+            // Verificar si el username ya existe
+            if (usuarioRepositorio.findByUsername(request.getUsername()).isPresent()) {
+                LoginResponse response = new LoginResponse();
+                response.setSuccess(false);
+                response.setMessage("El nombre de usuario ya está en uso");
+                return ResponseEntity.badRequest().body(response);
             }
+
+            // Verificar si el email ya existe
+            if (usuarioRepositorio.findByEmail(request.getEmail()).isPresent()) {
+                LoginResponse response = new LoginResponse();
+                response.setSuccess(false);
+                response.setMessage("El email ya está registrado");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Crear nuevo usuario
+            Usuario nuevoUsuario = new Usuario();
+            nuevoUsuario.setUsername(request.getUsername());
+            nuevoUsuario.setPassword(passwordEncoder.encode(request.getPassword()));
+            nuevoUsuario.setNombre(request.getNombre());
+            nuevoUsuario.setApellido(request.getApellido());
+            nuevoUsuario.setEmail(request.getEmail());
+            nuevoUsuario.setRol(request.getRol() != null ? request.getRol() : "CLIENTE");
+            nuevoUsuario.setEstado(true);
+
+            // Guardar usuario
+            Usuario usuarioGuardado = usuarioRepositorio.save(nuevoUsuario);
+            
+            // No enviar la contraseña en la respuesta
+            usuarioGuardado.setPassword(null);
+            
+            LoginResponse response = new LoginResponse();
+            response.setSuccess(true);
+            response.setMessage("Usuario registrado exitosamente");
+            response.setUser(usuarioGuardado);
+            
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        } catch (Exception e) {
+            LoginResponse response = new LoginResponse();
+            response.setSuccess(false);
+            response.setMessage("Error interno del servidor");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-        return ResponseEntity.badRequest()
-            .body(new LoginResponse(false, "Credenciales inválidas", null, null));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request, HttpSession session) {
+        try {
+            Optional<Usuario> usuarioOpt = usuarioRepositorio.findByUsername(request.getUsername());
+            
+            if (usuarioOpt.isPresent()) {
+                Usuario usuario = usuarioOpt.get();
+                
+                // Verificar si el usuario está activo
+                if (!usuario.getEstado()) {
+                    LoginResponse response = new LoginResponse();
+                    response.setSuccess(false);
+                    response.setMessage("Usuario inactivo");
+                    return ResponseEntity.badRequest().body(response);
+                }
+                
+                // Verificar la contraseña
+                if (passwordEncoder.matches(request.getPassword(), usuario.getPassword())) {
+                    // Configurar la sesión
+                    session.setAttribute("userId", usuario.getId());
+                    session.setAttribute("username", usuario.getUsername());
+                    session.setAttribute("rol", usuario.getRol());
+                    session.setAttribute("authenticated", true);
+                    
+                    // No enviar la contraseña en la respuesta
+                    usuario.setPassword(null);
+                    
+                    LoginResponse response = new LoginResponse();
+                    response.setSuccess(true);
+                    response.setMessage("Login exitoso");
+                    response.setUser(usuario);
+                    
+                    return ResponseEntity.ok(response);
+                }
+            }
+            
+            LoginResponse response = new LoginResponse();
+            response.setSuccess(false);
+            response.setMessage("Credenciales inválidas");
+            return ResponseEntity.badRequest().body(response);
+                
+        } catch (Exception e) {
+            LoginResponse response = new LoginResponse();
+            response.setSuccess(false);
+            response.setMessage("Error interno del servidor");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
     @PostMapping("/logout")
     public ResponseEntity<LoginResponse> logout(HttpSession session) {
         session.invalidate();
-        return ResponseEntity.ok(new LoginResponse(true, "Sesión cerrada exitosamente", null, null));
+        LoginResponse response = new LoginResponse();
+        response.setSuccess(true);
+        response.setMessage("Sesión cerrada exitosamente");
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/check")
-    public ResponseEntity<LoginResponse> checkAuth(HttpSession session) {
+    public ResponseEntity<AuthCheckResponse> checkAuth(HttpSession session) {
         Boolean authenticated = (Boolean) session.getAttribute("authenticated");
+        AuthCheckResponse response = new AuthCheckResponse();
+        
         if (authenticated != null && authenticated) {
-            String username = (String) session.getAttribute("username");
-            String rol = (String) session.getAttribute("rol");
-            return ResponseEntity.ok(new LoginResponse(
-                true, 
-                "Usuario autenticado", 
-                username, 
-                rol
-            ));
+            Long userId = (Long) session.getAttribute("userId");
+            
+            // Buscar el usuario completo para la respuesta
+            Optional<Usuario> usuarioOpt = usuarioRepositorio.findById(userId);
+            if (usuarioOpt.isPresent()) {
+                Usuario usuario = usuarioOpt.get();
+                usuario.setPassword(null); // No enviar la contraseña
+                
+                response.setAuthenticated(true);
+                response.setUser(usuario);
+                return ResponseEntity.ok(response);
+            }
         }
-        return ResponseEntity.ok(new LoginResponse(false, "No autenticado", null, null));
+        
+        response.setAuthenticated(false);
+        response.setUser(null);
+        return ResponseEntity.ok(response);
     }
 }

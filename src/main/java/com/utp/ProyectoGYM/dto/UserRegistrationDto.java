@@ -18,6 +18,25 @@ public class UserRegistrationDto {
     @Size(min = 6, message = "Password must be at least 6 characters long")
     private String password;
     
+    @NotBlank(message = "Nombre is required")
+    private String nombre;
+    
+    private String apellido;
+    
+    private String rol = "CLIENTE"; // Rol por defecto
+    
+    // Constructores
+    public UserRegistrationDto() {}
+    
+    public UserRegistrationDto(String username, String email, String password, String nombre, String apellido, String rol) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.nombre = nombre;
+        this.apellido = apellido;
+        this.rol = rol;
+    }
+    
     // Getters and Setters
     public String getUsername() {
         return username;
@@ -41,5 +60,29 @@ public class UserRegistrationDto {
     
     public void setPassword(String password) {
         this.password = password;
+    }
+    
+    public String getNombre() {
+        return nombre;
+    }
+    
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+    
+    public String getApellido() {
+        return apellido;
+    }
+    
+    public void setApellido(String apellido) {
+        this.apellido = apellido;
+    }
+    
+    public String getRol() {
+        return rol;
+    }
+    
+    public void setRol(String rol) {
+        this.rol = rol;
     }
 }

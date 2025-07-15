@@ -43,6 +43,8 @@ public class MembresiaService {
         dto.setTipo(membresia.getTipo());
         dto.setDescripcion(membresia.getDescripcion());
         dto.setPrecio(membresia.getPrecio());
+        dto.setDuracionDias(membresia.getDuracionDias());
+        dto.setEstado(membresia.getEstado());
         return dto;
     }
 
@@ -52,6 +54,8 @@ public class MembresiaService {
         membresia.setTipo(dto.getTipo());
         membresia.setDescripcion(dto.getDescripcion());
         membresia.setPrecio(dto.getPrecio());
+        membresia.setDuracionDias(dto.getDuracionDias());
+        membresia.setEstado(dto.getEstado() != null ? dto.getEstado() : true);
         return membresia;
     }
 }

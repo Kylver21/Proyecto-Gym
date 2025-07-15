@@ -16,11 +16,11 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 @EnableWebSecurity
@@ -37,8 +37,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
                 // Acceso libre a login, registro, Swagger y H2 Console
                 .requestMatchers(
@@ -49,20 +49,41 @@ public class SecurityConfig {
                     "/webjars/**",
                     "/h2-console/**"
                 ).permitAll()
-                // Solo ADMIN puede gestionar usuarios
-                .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
-                // ADMIN y EMPLEADO pueden gestionar membresías y pagos
-                .requestMatchers("/api/membresias/**", "/api/pagos/**").hasAnyRole("ADMIN", "EMPLEADO")
+                // Acceso libre a todas las APIs para desarrollo - cambiar en producción
+                .requestMatchers("/api/**").permitAll()
+                // Solo ADMIN puede gestionar usuarios (comentado para desarrollo)
+                // .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
+                // ADMIN y EMPLEADO pueden gestionar membresías y pagos (comentado para desarrollo)
+                // .requestMatchers("/api/membresias/**", "/api/pagos/**").hasAnyRole("ADMIN", "EMPLEADO")
                 .anyRequest().authenticated()
             )
-            .httpBasic(httpBasic -> {})
+            // ❌ REMOVIDO: .httpBasic() - Esto causaba el popup
+            // ✅ AGREGADO: Configuración de sesiones para SPA
             .sessionManagement(session -> 
-                session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                session
+                    .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                    .maximumSessions(1)
+                    .maxSessionsPreventsLogin(false)
             )
+            // ✅ MEJORADO: Headers de seguridad sin WWW-Authenticate
             .headers(headers -> headers
                 .frameOptions(frame -> frame.sameOrigin())
                 .xssProtection(xss -> xss.headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
                 .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'"))
+                .httpStrictTransportSecurity(hstsConfig -> hstsConfig.disable()) // Opcional para desarrollo
+            )
+            // ✅ AGREGADO: Manejo personalizado de errores de autenticación
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(401);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"error\":\"No autorizado\",\"message\":\"Debe iniciar sesión\"}");
+                })
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    response.setStatus(403);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"error\":\"Acceso denegado\",\"message\":\"No tiene permisos suficientes\"}");
+                })
             );
         
         return http.build();
@@ -73,20 +94,12 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
             "http://localhost:5173",
-            "http://127.0.0.1:5173"
+            "http://localhost:5174",
+            "http://127.0.0.1:5173",
+            "http://127.0.0.1:5174"
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of(
-            "Content-Type",
-            "Authorization",
-            "X-Requested-With",
-            "Accept",
-            "X-XSRF-TOKEN"
-        ));
-        configuration.setExposedHeaders(List.of(
-            "Authorization",
-            "X-XSRF-TOKEN"
-        ));
+        configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
         
@@ -98,24 +111,19 @@ public class SecurityConfig {
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> {
-            // Buscar usuario por nombre de usuario
-            // Asumiendo que existe un método findByUsername en el repositorio
             Usuario usuario = usuarioRepo.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
             
-            // Obtener el rol del usuario
-            // Asumiendo que la entidad Usuario tiene un campo 'rol' con sus getters/setters
-            String rol = "ROLE_USER"; // Valor por defecto
+            // Los roles en la BD son: ADMIN, EMPLEADO, CLIENTE (sin ROLE_)
+            String rol = "USER";
             if (usuario.getRol() != null && !usuario.getRol().isEmpty()) {
-                rol = usuario.getRol().startsWith("ROLE_") ? 
-                    usuario.getRol() : 
-                    "ROLE_" + usuario.getRol();
+                rol = usuario.getRol();
             }
                 
             return User.builder()
                     .username(usuario.getUsername())
-                    .password("{noop}" + usuario.getPassword()) // {noop} para deshabilitar el encriptado
-                    .roles(rol.replace("ROLE_", "")) // Elimina el prefijo ROLE_ si existe
+                    .password(usuario.getPassword()) // Ya está hasheado con BCrypt
+                    .roles(rol)
                     .build();
         };
     }

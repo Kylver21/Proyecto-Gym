@@ -11,6 +11,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/registro-membresias")
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174", "http://localhost:5175"})
 public class RegistroMembresiaRestController {
 
     @Autowired
@@ -26,6 +27,11 @@ public class RegistroMembresiaRestController {
         Optional<RegistroMembresiaDTO> registro = registroMembresiaService.obtenerPorId(id);
         return registro.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/usuario/{usuarioId}")
+    public List<RegistroMembresiaDTO> obtenerPorUsuario(@PathVariable Long usuarioId) {
+        return registroMembresiaService.obtenerPorUsuario(usuarioId);
     }
 
     @PostMapping

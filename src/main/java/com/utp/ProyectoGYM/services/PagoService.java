@@ -42,12 +42,19 @@ public class PagoService {
         pagoRepositorio.deleteById(id);
     }
 
+    public List<PagoDTO> obtenerPorUsuario(Long usuarioId) {
+        return pagoRepositorio.findByUsuarioId(usuarioId).stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
+    }
+
     private PagoDTO convertirADTO(Pago pago) {
         PagoDTO dto = new PagoDTO();
         dto.setId(pago.getId());
         dto.setMonto(pago.getMonto());
         dto.setFechaPago(pago.getFechaPago());
         dto.setMetodoPago(pago.getMetodoPago());
+        dto.setEstado(pago.getEstado());
         if (pago.getRegistroMembresia() != null) {
             dto.setRegistroMembresiaId(pago.getRegistroMembresia().getId());
         }
@@ -60,6 +67,7 @@ public class PagoService {
         pago.setMonto(dto.getMonto());
         pago.setFechaPago(dto.getFechaPago());
         pago.setMetodoPago(dto.getMetodoPago());
+        pago.setEstado(dto.getEstado() != null ? dto.getEstado() : "PENDIENTE");
         if (dto.getRegistroMembresiaId() != null) {
             RegistroMembresia reg = registroMembresiaRepositorio.findById(dto.getRegistroMembresiaId())
                     .orElseThrow(() -> new RuntimeException("Registro de membresía no encontrado"));

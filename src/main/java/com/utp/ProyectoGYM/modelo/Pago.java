@@ -16,6 +16,7 @@ public class Pago {
     private Double monto;
     private LocalDate fechaPago;
     private String metodoPago;
+    private String estado;
 
     public Long getId() {
         return id;
@@ -55,6 +56,14 @@ public class Pago {
 
     public void setMetodoPago(String metodoPago) {
         this.metodoPago = metodoPago;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
     }
     
     

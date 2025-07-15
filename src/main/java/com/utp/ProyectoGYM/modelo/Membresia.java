@@ -10,6 +10,9 @@ public class Membresia {
     private String tipo;
     private String descripcion;
     private Double precio;
+    @Column(name = "duracion_dias")
+    private Integer duracionDias;
+    private Boolean estado;
 
     public Long getId() {
         return id;
@@ -41,6 +44,22 @@ public class Membresia {
 
     public void setPrecio(Double precio) {
         this.precio = precio;
+    }
+
+    public Integer getDuracionDias() {
+        return duracionDias;
+    }
+
+    public void setDuracionDias(Integer duracionDias) {
+        this.duracionDias = duracionDias;
+    }
+
+    public Boolean getEstado() {
+        return estado;
+    }
+
+    public void setEstado(Boolean estado) {
+        this.estado = estado;
     }
     
     
