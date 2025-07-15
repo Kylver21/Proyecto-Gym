@@ -94,7 +94,7 @@ ProyectoGYM/
 
 ```bash
 # Clona el repositorio
-git clone https://github.com/tu-usuario/ProyectoGYM.git
+git clone https://github.com/Kylver21/Proyecto-Gym
 cd ProyectoGYM
 ```
 
