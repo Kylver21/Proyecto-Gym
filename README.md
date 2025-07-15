@@ -1,115 +1,161 @@
-🏋️ ProyectoGYM - Sistema de Gestión de Gimnasio
-Sistema completo de gestión para gimnasios desarrollado con Spring Boot (Backend) y React (Frontend), que permite administrar usuarios, membresías, pagos, productos y generar reportes.
+# 🏋️ ProyectoGYM
 
-🚀 Características Principales
-🔐 Autenticación y Autorización
-Sistema de login y registro de usuarios
-Autenticación basada en sesiones HTTP
-Roles de usuario: ADMIN, EMPLEADO, CLIENTE
-Encriptación de contraseñas con BCrypt
-Control de acceso por roles
-👥 Gestión de Usuarios
-Registro y autenticación de usuarios
-Gestión completa de perfiles (CRUD)
-Diferentes roles con permisos específicos
-Estados de usuario (activo/inactivo)
-🏃‍♂️ Gestión de Membresías
-Tipos de membresía: Mensual, Trimestral, Semestral, Anual
-Registro de membresías por usuario
-Control de fechas de inicio y vencimiento
-Estados: ACTIVA, VENCIDA, CANCELADA
-💰 Sistema de Pagos
-Registro de pagos de membresías
-Métodos de pago: Efectivo, Tarjeta, Transferencia
-Estados de pago: COMPLETADO, PENDIENTE, CANCELADO
-Historial de pagos por usuario
-🛒 Gestión de Productos
-Catálogo de productos del gimnasio
-Control de inventario y stock
-Precios y descripciones
-Estados de productos
-📊 Sistema de Reportes
-Reportes de ventas e ingresos
-Estadísticas de membresías
-Análisis de usuarios registrados
-Reportes de inventario
-Análisis de pagos
-🛠️ Tecnologías Utilizadas
-Backend (Spring Boot)
-Java 21+
-Spring Boot 3.x
-Spring Security - Autenticación y autorización
-Spring Data JPA - Persistencia de datos
-Hibernate - ORM
-MySQL - Base de datos
-BCrypt - Encriptación de contraseñas
-Maven - Gestión de dependencias
-Frontend (React)
-React 18+
-TypeScript
-Axios - Cliente HTTP
-React Router - Navegación
-Material-UI / Tailwind CSS - Interfaz de usuario
-Base de Datos
-MySQL 8.0+
-Esquema: dbgym
-📁 Estructura del Proyecto:
+Sistema completo de gestión para gimnasios desarrollado con **Spring Boot** (Backend) y **React** (Frontend), creado para administrar usuarios, membresías, pagos, productos y generar reportes. ¡Optimiza la operación de tu gimnasio con una plataforma moderna y segura!
+
+---
+
+## 🚀 Características Principales
+
+| Funcionalidad          | Descripción                                                                                     |
+|-----------------------|-------------------------------------------------------------------------------------------------|
+| 🔐 **Autenticación & Autorización** | - Login y registro de usuarios<br>- Autenticación por sesiones HTTP<br>- Roles: `ADMIN`, `EMPLEADO`, `CLIENTE`<br>- Contraseñas encriptadas (BCrypt)<br>- Control de acceso granular |
+| 👥 **Gestión de Usuarios**           | - CRUD de perfiles<br>- Estados: Activo/Inactivo<br>- Permisos específicos por rol                                      |
+| 🏃‍♂️ **Gestión de Membresías**      | - Tipos: Mensual, Trimestral, Semestral, Anual<br>- Registro y control de membresías<br>- Estados: Activa, Vencida, Cancelada |
+| 💰 **Sistema de Pagos**              | - Registro de pagos y métodos: Efectivo, Tarjeta, Transferencia<br>- Estados: Completado, Pendiente, Cancelado<br>- Historial de pagos por usuario |
+| 🛒 **Gestión de Productos**          | - Catálogo y control de inventario<br>- Precios y descripciones<br>- Gestión de stock y estado de productos             |
+| 📊 **Sistema de Reportes**           | - Reportes de ventas e ingresos<br>- Estadísticas de membresías<br>- Análisis de usuarios y pagos<br>- Reportes de inventario |
+
+---
+
+## 🛠️ Tecnologías Utilizadas
+
+**Backend**  
+- Java 21+  
+- Spring Boot 3.x  
+- Spring Security  
+- Spring Data JPA  
+- Hibernate  
+- MySQL  
+- BCrypt  
+- Maven  
+
+**Frontend**  
+- React 18+  
+- TypeScript  
+- Axios  
+- React Router  
+- Material-UI / Tailwind CSS  
+
+**Base de Datos**  
+- MySQL 8.0+  
+- Esquema: `dbgym`
+
+---
+
+## 📁 Estructura del Proyecto
+
+```
 ProyectoGYM/
 ├── src/main/java/com/utp/ProyectoGYM/
 │   ├── config/
-│   │   └── SecurityConfig.java          # Configuración de seguridad
+│   │   └── SecurityConfig.java           # Configuración de seguridad
 │   ├── controller/
-│   │   ├── AuthController.java          # Autenticación
-│   │   ├── UsuarioRestController.java   # Gestión de usuarios
-│   │   ├── MembresiaRestController.java # Gestión de membresías
-│   │   ├── PagoRestController.java      # Gestión de pagos
-│   │   ├── ProductoRestController.java  # Gestión de productos
-│   │   └── ReporteRestController.java   # Sistema de reportes
+│   │   ├── AuthController.java           # Autenticación
+│   │   ├── UsuarioRestController.java    # Usuarios
+│   │   ├── MembresiaRestController.java  # Membresías
+│   │   ├── PagoRestController.java       # Pagos
+│   │   ├── ProductoRestController.java   # Productos
+│   │   └── ReporteRestController.java    # Reportes
 │   ├── modelo/
-│   │   ├── Usuario.java                 # Entidad Usuario
-│   │   ├── Membresia.java              # Entidad Membresía
-│   │   ├── RegistroMembresia.java      # Registro de membresías
-│   │   ├── Pago.java                   # Entidad Pago
-│   │   ├── Producto.java               # Entidad Producto
-│   │   └── Reporte.java                # Entidad Reporte
+│   │   ├── Usuario.java                  # Entidad Usuario
+│   │   ├── Membresia.java                # Entidad Membresía
+│   │   ├── RegistroMembresia.java        # Registro Membresía
+│   │   ├── Pago.java                     # Entidad Pago
+│   │   ├── Producto.java                 # Entidad Producto
+│   │   └── Reporte.java                  # Entidad Reporte
 │   ├── dto/
-│   │   ├── LoginRequest.java           # DTO para login
-│   │   ├── LoginResponse.java          # DTO respuesta login
-│   │   ├── RegisterRequest.java        # DTO para registro
-│   │   └── [Otros DTOs...]
+│   │   ├── LoginRequest.java             # DTO login
+│   │   ├── LoginResponse.java            # Respuesta login
+│   │   ├── RegisterRequest.java          # DTO registro
+│   │   └── ...
 │   ├── repositorio/
-│   │   └── [Repositorios JPA...]
+│   │   └── ...                           # Repositorios JPA
 │   ├── services/
-│   │   └── [Servicios de negocio...]
-│   └── ProyectoGymApplication.java     # Clase principal
+│   │   └── ...                           # Servicios de negocio
+│   └── ProyectoGymApplication.java       # Clase principal
 ├── src/main/resources/
-│   ├── application.properties          # Configuración
-│   └── [Scripts SQL...]
-└── pom.xml                            # Dependencias Maven
+│   ├── application.properties            # Configuración
+│   └── ...                               # Scripts SQL
+└── pom.xml                               # Dependencias Maven
+```
 
-🔧 Instalación y Configuración
-Prerrequisitos
-Java 21 o superior
-Maven 3.8+
-MySQL 8.0+
-Node.js 18+ (para el frontend)
-1. Clonar el Repositorio
+---
+
+## 🔧 Instalación y Configuración
+
+### Prerrequisitos
+
+- **Java 21+**
+- **Maven 3.8+**
+- **MySQL 8.0+**
+- **Node.js 18+** (Frontend)
+
+### Pasos de instalación
+
+```bash
+# Clona el repositorio
 git clone https://github.com/tu-usuario/ProyectoGYM.git
 cd ProyectoGYM
+```
 
-Roles y Permisos
-ADMIN: Acceso completo al sistema
-EMPLEADO: Gestión de membresías y pagos
-CLIENTE: Acceso limitado a su información
-Autenticación
-Sesiones HTTP con Spring Security
-Contraseñas encriptadas con BCrypt
-Manejo de errores personalizado
-📊 Base de Datos
-Tablas Principales
-usuario - Información de usuarios
-membresia - Tipos de membresías
-registro_membresia - Membresías activas por usuario
-pago - Registro de pagos
-producto - Catálogo de productos
-reporte - Sistema de reportes
+**Configura la base de datos:**  
+Crea la base de datos `dbgym` y ajusta tus credenciales en `src/main/resources/application.properties`.
+
+**Backend:**  
+```bash
+mvn clean install
+mvn spring-boot:run
+```
+
+**Frontend:**  
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+---
+
+## 🛡️ Roles y Permisos
+
+- **ADMIN:** Acceso total a todas las funcionalidades
+- **EMPLEADO:** Gestión de membresías y pagos
+- **CLIENTE:** Acceso limitado a su información personal
+
+**Seguridad:**  
+- Sesiones HTTP con Spring Security  
+- Contraseñas encriptadas con BCrypt  
+- Manejo de errores personalizado
+
+---
+
+## 📊 Base de Datos
+
+### Tablas Principales
+
+| Tabla               | Descripción                      |
+|---------------------|----------------------------------|
+| usuario             | Información de usuarios          |
+| membresia           | Tipos de membresías              |
+| registro_membresia  | Membresías activas por usuario   |
+| pago                | Registro de pagos                |
+| producto            | Catálogo de productos            |
+| reporte             | Sistema de reportes              |
+
+---
+
+## 💡 Contribución
+
+¿Te gustaría mejorar el proyecto? ¡Las contribuciones son bienvenidas!  
+Por favor, abre un issue o un pull request con tus sugerencias o mejoras.
+
+---
+
+## 📬 Contacto
+
+¿Dudas o sugerencias?  
+Puedes contactarme en [GitHub](https://github.com/Kylver21) o por correo: kilverpaucar1@gmail.com
+
+---
+
+> **ProyectoGYM**: ¡Haz tu gimnasio más eficiente y profesional!
