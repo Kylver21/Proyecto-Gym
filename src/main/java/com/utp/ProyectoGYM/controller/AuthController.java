@@ -52,9 +52,12 @@ public class AuthController {
             nuevoUsuario.setNombre(request.getNombre());
             nuevoUsuario.setApellido(request.getApellido());
             nuevoUsuario.setEmail(request.getEmail());
-            nuevoUsuario.setRol(request.getRol() != null ? request.getRol() : "CLIENTE");
+            
+            // Validar y establecer rol correctamente
+            String rolNormalizado = validateAndNormalizeRole(request.getRol());
+            nuevoUsuario.setRol(rolNormalizado);
             nuevoUsuario.setEstado(true);
-
+            
             // Guardar usuario
             Usuario usuarioGuardado = usuarioRepositorio.save(nuevoUsuario);
             
@@ -69,6 +72,8 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (Exception e) {
+            System.err.println("❌ Error en register: " + e.getMessage());
+            e.printStackTrace();
             LoginResponse response = new LoginResponse();
             response.setSuccess(false);
             response.setMessage("Error interno del servidor");
@@ -85,7 +90,8 @@ public class AuthController {
                 Usuario usuario = usuarioOpt.get();
                 
                 // Verificar si el usuario está activo
-                if (!usuario.getEstado()) {
+                if (!usuario.isEstado()) {
+                    System.out.println("❌ Usuario inactivo: " + request.getUsername());
                     LoginResponse response = new LoginResponse();
                     response.setSuccess(false);
                     response.setMessage("Usuario inactivo");
@@ -94,10 +100,14 @@ public class AuthController {
                 
                 // Verificar la contraseña
                 if (passwordEncoder.matches(request.getPassword(), usuario.getPassword())) {
+                    // Normalizar el rol antes de guardarlo en sesión
+                    String rolNormalizado = validateAndNormalizeRole(usuario.getRol());
+                    usuario.setRol(rolNormalizado);
+                    
                     // Configurar la sesión
                     session.setAttribute("userId", usuario.getId());
                     session.setAttribute("username", usuario.getUsername());
-                    session.setAttribute("rol", usuario.getRol());
+                    session.setAttribute("rol", rolNormalizado);
                     session.setAttribute("authenticated", true);
                     
                     // No enviar la contraseña en la respuesta
@@ -112,12 +122,15 @@ public class AuthController {
                 }
             }
             
+            System.out.println("❌ Credenciales inválidas para: " + request.getUsername());
             LoginResponse response = new LoginResponse();
             response.setSuccess(false);
             response.setMessage("Credenciales inválidas");
             return ResponseEntity.badRequest().body(response);
                 
         } catch (Exception e) {
+            System.err.println("❌ Error en login: " + e.getMessage());
+            e.printStackTrace();
             LoginResponse response = new LoginResponse();
             response.setSuccess(false);
             response.setMessage("Error interno del servidor");
@@ -146,6 +159,11 @@ public class AuthController {
             Optional<Usuario> usuarioOpt = usuarioRepositorio.findById(userId);
             if (usuarioOpt.isPresent()) {
                 Usuario usuario = usuarioOpt.get();
+                
+                // Asegurar que el rol esté normalizado
+                String rolNormalizado = validateAndNormalizeRole(usuario.getRol());
+                usuario.setRol(rolNormalizado);
+                
                 usuario.setPassword(null); // No enviar la contraseña
                 
                 response.setAuthenticated(true);
@@ -157,5 +175,26 @@ public class AuthController {
         response.setAuthenticated(false);
         response.setUser(null);
         return ResponseEntity.ok(response);
+    }
+
+    // Método para validar y normalizar roles
+    private String validateAndNormalizeRole(String inputRole) {
+        if (inputRole == null || inputRole.trim().isEmpty()) {
+            return "CLIENTE";
+        }
+        
+        // Normalizar el rol (quitar ROLE_ si existe y convertir a mayúsculas)
+        String normalizedRole = inputRole.replace("ROLE_", "").toUpperCase().trim();
+        
+        // Validar que sea un rol válido
+        switch (normalizedRole) {
+            case "ADMIN":
+            case "EMPLEADO":
+            case "CLIENTE":
+                return normalizedRole;
+            default:
+                System.out.println("❌ Rol inválido '" + normalizedRole + "', usando CLIENTE por defecto");
+                return "CLIENTE";
+        }
     }
 }
