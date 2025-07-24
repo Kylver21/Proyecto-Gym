@@ -2,12 +2,16 @@
 package com.utp.ProyectoGYM.dto;
 
 import java.time.LocalDate;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 public class PagoDTO {
     private Long id;
     private Long registroMembresiaId;
     private Double monto;
+    
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate fechaPago;
+    
     private String metodoPago;
     private String estado;
 

@@ -17,7 +17,11 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174", "http://localhost:5175"})
+@CrossOrigin(
+    origins = {"http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:3001"}, 
+    allowCredentials = "true",
+    methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS}
+)
 public class AuthController {
 
     @Autowired
@@ -109,6 +113,9 @@ public class AuthController {
                     session.setAttribute("username", usuario.getUsername());
                     session.setAttribute("rol", rolNormalizado);
                     session.setAttribute("authenticated", true);
+                    
+                    // Configurar duración de sesión (30 minutos)
+                    session.setMaxInactiveInterval(30 * 60);
                     
                     // No enviar la contraseña en la respuesta
                     usuario.setPassword(null);

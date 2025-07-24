@@ -1,6 +1,69 @@
 # 🏋️ ProyectoGYM - Sistema de Gestión de Gimnasio
 
-Sistema completo de gestión para gimnasios desarrollado con **Spring Boot** (Backend) y **React** (Frontend), creado para administrar usuarios, membresías, pagos, productos y generar reportes. ¡Optimiza la operación de tu gimnasio con una plataforma moderna y segura!
+Sistema completo de gestión para gimnasios desarrollado con **Spring Boot** (Backend) y **React** (Frontend), creado para administrar usuarios, membresías, pag---
+
+## 🚀 Asignar Membresía Premium para Pruebas
+
+Para probar el frontend con el usuario TEST, puedes ejecutar:
+
+```bash
+mysql -u root -p bdgym < asignar_membresia_test.sql
+```
+
+Este script asignará una membresía Premium al usuario TEST para pruebas.
+
+---
+
+## 💾 Backup y Restauración de Base de Datos
+
+### Crear Backup
+
+**Opción 1: Script Automático (Recomendado)**
+```bash
+# PowerShell
+.\crear_backup.ps1
+
+# Batch
+crear_backup.bat
+```
+
+**Opción 2: Comando Manual**
+```bash
+# Windows
+& "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysqldump.exe" -u root -p dbgym > backup_dbgym_$(Get-Date -Format 'yyyyMMdd_HHmmss').sql
+
+# Linux/Mac
+mysqldump -u root -p dbgym > backup_dbgym_$(date +%Y%m%d_%H%M%S).sql
+```
+
+### Restaurar Backup
+
+**Opción 1: Script Automático**
+```bash
+# PowerShell (selección interactiva)
+.\restaurar_backup.ps1
+
+# Con archivo específico
+.\restaurar_backup.ps1 -ArchivoBackup "backup_dbgym_20250715_010605.sql"
+```
+
+**Opción 2: Comando Manual**
+```bash
+# Windows
+& "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p dbgym < backup_dbgym_20250715_010605.sql
+
+# Linux/Mac
+mysql -u root -p dbgym < backup_dbgym_20250715_010605.sql
+```
+
+### Programar Backups Automáticos
+
+Para crear backups automáticos, puedes usar el Programador de Tareas de Windows:
+
+1. Abrir "Programador de tareas"
+2. Crear tarea básica
+3. Programar para ejecutar `crear_backup.bat` diariamente
+4. Configurar la ruta del proyecto como directorio de trabajoos y generar reportes. ¡Optimiza la operación de tu gimnasio con una plataforma moderna y segura!
 
 ---
 
